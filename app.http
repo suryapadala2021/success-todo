@@ -1,1 +1,12 @@
-get http://localhost:3000/agenda/?date=2021-01-31
+post http://localhost:3000/todos/
+
+{
+ "id": 6,
+ "todo": "Finalize event theme",
+ "priority": "LOW",
+ "status": "IN PROGRESS",
+ "category": "HOME",
+ "dueDate": "2021-02-22"
+}
+
+####

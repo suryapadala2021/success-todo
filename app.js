@@ -33,8 +33,21 @@ const isStatusOnly = (obj) => {
   if (
     obj.priority === undefined &&
     obj.category === undefined &&
-    obj.due_date === undefined &&
+    obj.dueDate === undefined &&
     obj.status !== undefined
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+};
+const isTodoOnly = (obj) => {
+  if (
+    obj.priority === undefined &&
+    obj.category === undefined &&
+    obj.dueDate === undefined &&
+    obj.status === undefined &&
+    obj.todo !== undefined
   ) {
     return true;
   } else {
@@ -45,7 +58,7 @@ const isPriorityOnly = (obj) => {
   if (
     obj.priority !== undefined &&
     obj.category === undefined &&
-    obj.due_date === undefined &&
+    obj.dueDate === undefined &&
     obj.status === undefined
   ) {
     return true;
@@ -57,7 +70,7 @@ const isPriorityAndStatus = (obj) => {
   if (
     obj.priority !== undefined &&
     obj.category === undefined &&
-    obj.due_date === undefined &&
+    obj.dueDate === undefined &&
     obj.status !== undefined
   ) {
     return true;
@@ -69,7 +82,7 @@ const isCatAndStatus = (obj) => {
   if (
     obj.priority === undefined &&
     obj.category !== undefined &&
-    obj.due_date === undefined &&
+    obj.dueDate === undefined &&
     obj.status !== undefined
   ) {
     return true;
@@ -81,7 +94,7 @@ const isCatOnly = (obj) => {
   if (
     obj.priority === undefined &&
     obj.category !== undefined &&
-    obj.due_date === undefined &&
+    obj.dueDate === undefined &&
     obj.status === undefined
   ) {
     return true;
@@ -93,7 +106,7 @@ const isCatAndPriority = (obj) => {
   if (
     obj.priority !== undefined &&
     obj.category !== undefined &&
-    obj.due_date === undefined &&
+    obj.dueDate === undefined &&
     obj.status === undefined
   ) {
     return true;
@@ -135,7 +148,6 @@ const checkDate = (request, response, next) => {
   }
 };
 
-const checkDate2 = (date) => {};
 app.get("/todos/", async (request, response) => {
   const { status, priority, category, due_date, search_q = "" } = request.query;
   if (isStatusOnly(request.query)) {
@@ -374,4 +386,96 @@ app.post("/todos/", async (request, response) => {
     await db.run(addTodo);
     response.send("Todo Successfully Added");
   }
+});
+app.put("/todos/:todoId/", async (request, response) => {
+  const { todoId } = request.params;
+  const { status, priority, category, todo, dueDate } = request.body;
+  if (isStatusOnly(request.body)) {
+    if (checkStatus(status)) {
+      const updateTodo = `
+            UPDATE
+            todo
+            SET
+            status='${status}'
+            WHERE
+            id=${todoId};
+            `;
+      await db.run(updateTodo);
+      response.send("Status Updated");
+    } else {
+      response.status(400);
+      response.send("Invalid Todo Status");
+    }
+  } else if (isPriorityOnly(request.body)) {
+    if (checkPriority(priority)) {
+      const updateTodo = `
+            UPDATE
+            todo
+            SET
+            priority='${priority}'
+            WHERE
+            id=${todoId};
+            `;
+      await db.run(updateTodo);
+      response.send("Priority Updated");
+    } else {
+      response.status(400);
+      response.send("Invalid Todo Priority");
+    }
+  } else if (isCatOnly(request.body)) {
+    if (checkCat(category)) {
+      const updateTodo = `
+            UPDATE
+            todo
+            SET
+            category='${category}'
+            WHERE
+            id=${todoId};
+            `;
+      await db.run(updateTodo);
+      response.send("Category Updated");
+    } else {
+      response.status(400);
+      response.send("Invalid Todo Category");
+    }
+  } else if (isTodoOnly(request.body)) {
+    const updateTodo = `
+            UPDATE
+            todo
+            SET
+            todo='${todo}'
+            WHERE
+            id=${todoId};
+            `;
+    await db.run(updateTodo);
+    response.send("Todo Updated");
+  } else {
+    if (isValid(new Date(dueDate))) {
+      const newDate = format(new Date(dueDate), "yyyy-MM-dd");
+      const updateTodo = `
+            UPDATE
+            todo
+            SET
+            due_date='${newDate}'
+            WHERE
+            id=${todoId};
+            `;
+      await db.run(updateTodo);
+      response.send("Due Date Updated");
+    } else {
+      response.status(400);
+      response.send("Invalid Due Date");
+    }
+  }
+});
+app.delete("/todos/:todoId/", async (request, response) => {
+  const { todoId } = request.params;
+  const deleteTodo = `
+    DELETE
+    FROM
+    todo
+    WHERE
+    id=${todoId};`;
+  await db.run(deleteTodo);
+  response.send("Todo Deleted");
 });
